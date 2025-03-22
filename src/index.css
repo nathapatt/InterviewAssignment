@@ -1,0 +1,23 @@
+:root {
+  --background-color: #F7F7F7;
+  --text-color: rgba(0, 0, 0, 0.87);
+}
+
+.dark-mode {
+  --background-color: #151515;
+  --text-color: rgba(255, 255, 255, 0.87);
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+  overflow: hidden; /* Prevent scrolling */
+  background-color: var(--background-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease-in-out, color 0.2s ease-in-out;
+}
+
+
