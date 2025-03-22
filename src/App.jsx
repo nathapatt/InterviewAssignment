@@ -131,10 +131,10 @@ function App() {
           rowKey="name"
           pagination={{ pageSize: 5, showSizeChanger: false }}
           className="table-container"
-          style={{ boxShadow: "0 4px 10px rgba(0, 0, 0, 0.15)", borderRadius: "8px" }}
+          style={{ boxShadow: "0 4px 10px rgba(0, 0, 0, 0.15)", borderRadius: "8px"}}
         />
       </div>
-      <div className="watermark">© 2025 Witsawa Corporation Testing</div>
+      <div className="watermark" style={{marginBottom: "25px"}}>© 2025 Witsawa Corporation Testing</div>
     </ConfigProvider>
   );
 }
