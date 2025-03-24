@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Table, Input, Select, Switch, ConfigProvider, theme } from "antd";
+import { Table, Input, Select, Switch, ConfigProvider, theme, Button, Modal, Form } from "antd";
 import "./App.css";
 
 const { Search } = Input;
@@ -12,6 +12,9 @@ function App() {
   const [searchText, setSearchText] = useState("");
   const [selectedCountry, setSelectedCountry] = useState("");
   const [darkMode, setDarkMode] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editRecord, setEditRecord] = useState(null);
+  const [form] = Form.useForm();
 
   const fetchData = async () => {
     try {
@@ -21,6 +24,7 @@ function App() {
 
       if (response.data && Array.isArray(response.data.Makes)) {
         const transformedData = response.data.Makes.map((item) => ({
+          key: item.make_display,
           name: item.make_display,
           country: item.make_country,
         }));
@@ -57,7 +61,6 @@ function App() {
 
   const filterData = (name, country) => {
     let filtered = data;
-
     if (name) {
       filtered = filtered.filter((item) =>
         item.name.toLowerCase().includes(name.toLowerCase())
@@ -66,8 +69,42 @@ function App() {
     if (country) {
       filtered = filtered.filter((item) => item.country === country);
     }
-
     setFilteredData(filtered);
+  };
+
+  const handleAdd = () => {
+    form.resetFields();
+    setEditRecord(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = (record) => {
+    setEditRecord(record);
+    form.setFieldsValue(record);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = (key) => {
+    const updatedData = data.filter((item) => item.key !== key);
+    setData(updatedData);
+    setFilteredData(updatedData);
+  };
+
+  const handleSave = () => {
+    form.validateFields().then((values) => {
+      if (editRecord) {
+        const updatedData = data.map((item) =>
+          item.key === editRecord.key ? { ...values, key: editRecord.key } : item
+        );
+        setData(updatedData);
+        setFilteredData(updatedData);
+      } else {
+        const newData = { ...values, key: values.name };
+        setData([...data, newData]);
+        setFilteredData([...filteredData, newData]);
+      }
+      setIsModalOpen(false);
+    });
   };
 
   const columns = [
@@ -81,59 +118,71 @@ function App() {
       dataIndex: "country",
       key: "country",
     },
+    {
+      title: "Actions",
+      key: "actions",
+      
+      render: (_, record) => (
+        <>
+          <Button onClick={() => handleEdit(record)} style={{ marginRight: 8 }}>Edit</Button>
+          <Button danger onClick={() => handleDelete(record.key)}>Delete</Button>
+        </>
+      ),
+    },
   ];
 
   return (
-    <ConfigProvider
-      theme={{
-        algorithm: darkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
-      }}
-    >
+    <ConfigProvider theme={{ algorithm: darkMode ? theme.darkAlgorithm : theme.defaultAlgorithm }}>
       <div style={{ padding: 20, minHeight: "100vh", marginTop: 100 }}>
         <h2>Cars 🚗</h2>
 
-        {/* Dark Mode Toggle */}
         <div style={{ marginBottom: 15 }}>
-          <Switch
-            checked={darkMode}
-            onChange={() => setDarkMode(!darkMode)}
-            checkedChildren="Dark"
-            unCheckedChildren="Light"
+          <Switch 
+            checked={darkMode} 
+            onChange={() => setDarkMode(!darkMode)} 
+            checkedChildren="Dark" 
+            unCheckedChildren="Light" 
           />
         </div>
 
-        {/* Country Filter */}
-        <Select
-          placeholder="Select Country"
-          style={{ width: 200, marginRight: 10 }}
-          onChange={handleFilterCountry}
+        <Select 
+          placeholder="Select Country" 
+          style={{ width: 200, marginRight: 10 }} 
+          onChange={handleFilterCountry} 
           allowClear
         >
           {[...new Set(data.map((item) => item.country))].map((country) => (
-            <Option key={country} value={country}>
-              {country}
-            </Option>
+            <Option key={country} value={country}>{country}</Option>
           ))}
         </Select>
 
-        {/* Search Bar */}
-        <Search
-          placeholder="Search Name"
-          style={{ width: 200}}
-          allowClear
-          onSearch={handleSearch}
+        <Search 
+          placeholder="Search Name" 
+          style={{ width: 200, marginRight: 10 }} 
+          allowClear 
+          onSearch={handleSearch} 
         />
+        <Button type="primary" onClick={handleAdd}>Add Car</Button>
 
-        {/* Data Table */}
-        <Table
-          columns={columns}
-          dataSource={filteredData || []}
-          rowKey="name"
-          pagination={{ pageSize: 5, showSizeChanger: false }}
-          className="table-container"
-          style={{ boxShadow: "0 4px 10px rgba(0, 0, 0, 0.15)", borderRadius: "8px"}}
+        <Table 
+          columns={columns} 
+          dataSource={filteredData} 
+          rowKey="key" 
+          pagination={{ pageSize: 5, showSizeChanger: false }} 
+          style={{marginTop:20}}
         />
       </div>
+
+      <Modal title={editRecord ? "Edit Car" : "Add Car"} open={isModalOpen} onOk={handleSave} onCancel={() => setIsModalOpen(false)}>
+        <Form form={form} layout="vertical">
+          <Form.Item name="name" label="Car Name" rules={[{ required: true, message: "Please enter the car name!" }]}> 
+            <Input />
+          </Form.Item>
+          <Form.Item name="country" label="Country" rules={[{ required: true, message: "Please enter the country!" }]}> 
+            <Input />
+          </Form.Item>
+        </Form>
+      </Modal>
       <div className="watermark" style={{marginBottom: "25px"}}>© 2025 Witsawa Corporation Testing</div>
     </ConfigProvider>
   );
